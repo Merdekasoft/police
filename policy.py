@@ -2,16 +2,16 @@
 
 import sys
 import os
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QStackedWidget, QGraphicsDropShadowEffect,
     QSpacerItem, QSizePolicy
 )
-from PyQt5.QtGui import QPixmap, QImage, QColor
-from PyQt5.QtCore import Qt, QTimer, pyqtSlot, QPropertyAnimation, QPoint
+from PySide6.QtGui import QPixmap, QImage, QColor
+from PySide6.QtCore import Qt, QTimer, Slot, QPropertyAnimation, QPoint
 
-# Pastikan Anda sudah menginstal: pip install PyQt5 opencv-python pyzbar
-# Dan di sistem (Ubuntu/Debian): sudo apt-get install libzbar0
+# Make sure you have installed: pip install PySide6 opencv-python pyzbar
+# And on system (Ubuntu/Debian): sudo apt-get install libzbar0
 import cv2
 from pyzbar.pyzbar import decode
 
@@ -23,7 +23,7 @@ class PolicyKitCard(QWidget):
         self.finalize_layout()
 
     def setup_base_window(self):
-        """Mengatur properti dasar window dan widget utama."""
+        """Set basic window properties and main widget."""
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
@@ -39,22 +39,22 @@ class PolicyKitCard(QWidget):
         self.setStyleSheet(self.get_stylesheet())
 
     def setup_views_and_animations(self):
-        """Mempersiapkan semua view dan animasi yang dibutuhkan."""
+        """Prepare all views and required animations."""
         self.stacked_widget = QStackedWidget()
         self.password_view = QWidget()
         self.qr_view = QWidget()
 
-        # Penting: Buat widget input password terlebih dahulu
+        # Important: Create password input widget first
         self.password_input = QLineEdit()
         
-        # Sekarang buat view yang menggunakan widget tersebut
+        # Now create views using that widget
         self.setup_password_view()
         self.setup_qr_view()
 
         self.stacked_widget.addWidget(self.password_view)
         self.stacked_widget.addWidget(self.qr_view)
         
-        # Inisialisasi animasi goyang (shake)
+        # Initialize shake animation
         self.animation_shake = QPropertyAnimation(self.password_input, b"pos")
         self.animation_shake.setDuration(400)
         pos = self.password_input.pos()
@@ -65,9 +65,8 @@ class PolicyKitCard(QWidget):
         self.animation_shake.setKeyValueAt(0.7, QPoint(pos.x() + 5, pos.y()))
         self.animation_shake.setEndValue(pos)
 
-
     def finalize_layout(self):
-        """Menyusun layout utama dan menampilkan view awal."""
+        """Arrange main layout and show initial view."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(self.main_widget)
@@ -79,7 +78,7 @@ class PolicyKitCard(QWidget):
         self.switch_to_password_view()
 
     def get_stylesheet(self):
-        # Stylesheet tidak berubah, tetap sama seperti sebelumnya
+        # Stylesheet unchanged, same as before
         return """
             #main_widget { background-color: #2C2F33; border-radius: 12px; }
             QLabel { font-family: sans-serif; color: #FFFFFF; }
@@ -114,24 +113,24 @@ class PolicyKitCard(QWidget):
 
         layout.addLayout(self.create_close_button_layout())
 
-        title_label = QLabel("Otentikasi Dibutuhkan")
+        title_label = QLabel("Authentication Required")
         title_label.setObjectName("title_label")
         title_label.setAlignment(Qt.AlignCenter)
 
-        username = os.getenv("USER") or "pengguna"
-        username_label = QLabel(f"Masuk sebagai: <b>{username}</b>")
+        username = os.getenv("USER") or "user"
+        username_label = QLabel(f"Signed in as: <b>{username}</b>")
         username_label.setObjectName("username_label")
         username_label.setAlignment(Qt.AlignCenter)
 
-        self.password_input.setPlaceholderText("Kata Sandi")
+        self.password_input.setPlaceholderText("Password")
         self.password_input.setEchoMode(QLineEdit.Password)
         self.password_input.returnPressed.connect(self.authenticate)
 
-        scan_qr_button = QPushButton("Pindai Kode QR")
+        scan_qr_button = QPushButton("Scan QR Code")
         scan_qr_button.setObjectName("secondary_button")
         scan_qr_button.clicked.connect(self.switch_to_qr_view)
         
-        auth_button = QPushButton("Otentikasi")
+        auth_button = QPushButton("Authenticate")
         auth_button.setObjectName("primary_button")
         auth_button.clicked.connect(self.authenticate)
         
@@ -152,16 +151,16 @@ class PolicyKitCard(QWidget):
         
         layout.addLayout(self.create_close_button_layout())
 
-        title_label = QLabel("Arahkan ke Kode QR")
+        title_label = QLabel("Point to QR Code")
         title_label.setObjectName("title_label")
         title_label.setAlignment(Qt.AlignCenter)
 
-        self.camera_label = QLabel("Menyalakan Kamera...")
+        self.camera_label = QLabel("Turning on Camera...")
         self.camera_label.setAlignment(Qt.AlignCenter)
         self.camera_label.setStyleSheet("background-color: #1A1C1E; border-radius: 8px;")
         self.camera_label.setMinimumHeight(200)
 
-        back_button = QPushButton("Kembali ke Kata Sandi")
+        back_button = QPushButton("Back to Password")
         back_button.setObjectName("secondary_button")
         back_button.clicked.connect(self.switch_to_password_view)
         
@@ -174,9 +173,9 @@ class PolicyKitCard(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
     
-    @pyqtSlot()
+    @Slot()
     def switch_to_password_view(self):
-        """Beralih ke tampilan password."""
+        """Switch to password view."""
         self.resize_window(420, 280)
         self.stacked_widget.setCurrentWidget(self.password_view)
         if hasattr(self, 'capture') and self.capture and self.capture.isOpened():
@@ -185,20 +184,20 @@ class PolicyKitCard(QWidget):
             self.capture = None
         self.password_input.setFocus()
 
-    @pyqtSlot()
+    @Slot()
     def switch_to_qr_view(self):
-        """Beralih ke tampilan QR dan mencari kamera."""
+        """Switch to QR view and search for camera."""
         self.resize_window(420, 420)
         self.stacked_widget.setCurrentWidget(self.qr_view)
         
         if not (hasattr(self, 'capture') and self.capture and self.capture.isOpened()):
-            # Mencoba beberapa indeks kamera
+            # Try several camera indices
             for i in range(4):
                 self.capture = cv2.VideoCapture(i)
                 if self.capture.isOpened():
                     break
-            else: # Jika loop selesai tanpa break
-                self.camera_label.setText("Error: Kamera tidak ditemukan.")
+            else: # If loop finishes without break
+                self.camera_label.setText("Error: Camera not found.")
                 self.capture = None
                 return
 
@@ -224,12 +223,12 @@ class PolicyKitCard(QWidget):
                 self.camera_label.setPixmap(QPixmap.fromImage(qt_image).scaled(
                     self.camera_label.width(), self.camera_label.height(), Qt.KeepAspectRatio))
 
-    @pyqtSlot()
+    @Slot()
     def authenticate(self):
         password = self.password_input.text()
         if password:
-            print(f"Otentikasi dengan password: {password}")
-            # Di sini Anda akan mengintegrasikan logika PolicyKit
+            print(f"Authenticating with password: {password}")
+            # Here you will integrate PolicyKit logic
             self.close() 
         else:
             self.animation_shake.start()
@@ -247,4 +246,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = PolicyKitCard()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
